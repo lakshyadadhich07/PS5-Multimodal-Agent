@@ -41,3 +41,32 @@ The application will automatically open in your default web browser at `http://1
 
 ## Deployment to Hugging Face Spaces
 This app is HF Spaces ready! Simply push the code to a new Gradio space and add your `GROQ_API_KEY` to the repository secrets. The app will build and run without any hardcoded credentials.
+
+# Screenshots
+
+## 1. Home Interface
+Main dashboard of the Multimodal Q&A Pro application showing the PDF upload section and chat interface.
+
+![alt text](<screenshots/Screenshot 2026-07-08 185753.png>)
+
+---
+
+## 2. PDF Document Q&A
+The agent retrieves relevant information from uploaded PDF documents using ChromaDB and generates context-aware answers.
+
+![alt text](<screenshots/Screenshot 2026-07-08 190104.png>)
+---
+
+## 3. Image Analysis
+The agent analyzes uploaded images using Groq Vision and provides detailed descriptions or answers image-related questions.
+
+![alt text](<screenshots/Screenshot 2026-07-08 185811.png>)
+
+![alt text](<screenshots/Screenshot 2026-07-08 190322.png>)
+
+---
+
+## 4. Web Search
+When the required information is unavailable in uploaded documents, the agent automatically performs a web search to provide up-to-date information.
+
+![alt text](<screenshots/Screenshot 2026-07-08 190239.png>)
