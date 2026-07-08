@@ -1,89 +1,42 @@
 from dotenv import load_dotenv
-
 from langchain_groq import ChatGroq
-
-from langgraph.prebuilt import create_react_agent
-
-from tools import (
-    search_documents,
-    web_search,
-    image_analysis,
-    wikipedia_search
-)
+from tools import search_documents
+from vision_tool import describe_image
 
 load_dotenv()
 
-
-# ==========================================
-# Model
-# ==========================================
-
 MODEL_NAME = "llama-3.3-70b-versatile"
+llm = ChatGroq(model=MODEL_NAME)
 
-llm = ChatGroq(
-    model=MODEL_NAME
-)
+def run_hybrid_agent(query: str, image_path: str = None):
+    try:
+        # IMAGE
+        if image_path is not None:
+            safe_image_path = image_path.replace("\\", "/")
+            response = describe_image(safe_image_path)
+            return response, "Manual routing: Image Processing block executed."
 
+        # GET CONTEXT
+        context = search_documents.invoke(query)
 
-# ==========================================
-# Tools
-# ==========================================
+        if "No uploaded" in context:
+            return "I don't know.", "Manual routing: No context found."
 
-TOOLS = [
+        # SEND TO LLM
+        prompt = f"""
+Use ONLY this context.
 
-    search_documents,
+Context:
+{context}
 
-    web_search,
+Question:
+{query}
 
-    image_analysis,
+Answer naturally.
+"""
+        answer = llm.invoke(prompt)
 
-    wikipedia_search
+        return answer.content, "Manual routing: Document Q&A block executed."
 
-]
-
-
-# ==========================================
-# LangGraph ReAct Agent
-# ==========================================
-
-agent = create_react_agent(
-
-    model=llm,
-
-    tools=TOOLS
-
-)
-
-
-# ==========================================
-# Hybrid Query (Returns Response and Trace)
-# ==========================================
-
-def run_hybrid_agent(user_query: str, image_path: str = None):
-
-    messages = []
-
-    if image_path:
-        messages.append({
-            "role": "system",
-            "content": f"The user has uploaded an image at path: {image_path}. You can use the image_analysis tool with this path to answer questions about the image."
-        })
-
-    messages.append({
-        "role": "user",
-        "content": user_query
-    })
-
-    trace = []
-    final_response = ""
-
-    for step in agent.stream({"messages": messages}, config={"recursion_limit": 12}):
-        trace.append(str(step))
-
-        for node_name, node_state in step.items():
-            if "messages" in node_state:
-                last_message = node_state["messages"][-1]
-                if hasattr(last_message, "content") and last_message.content:
-                    final_response = last_message.content
-
-    return final_response, "\\n\\n".join(trace)
+    except Exception as e:
+        return str(e), f"Error occurred: {str(e)}"
